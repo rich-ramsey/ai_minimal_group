@@ -1,0 +1,252 @@
+---
+title: "wrangle"
+author: "Rich"
+date: "2024-05-07"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This file wrangles raw data from the AI minimal group experiment. 
+It produces some summary data plots, saves out data files for modelling and further analysis in later scripts.
+
+## load the libraries that we will be using ## 
+
+## install ##
+
+```{r install-pkg}
+# install.packages(c("tidyverse", "RColorBrewer", "patchwork"))
+```
+
+take a snapshot of loaded packages and update the lock.file using renv
+
+```{r snapshot-renv}
+# take a snapshot and update the lock.file
+# renv::snapshot() # this is only necessary when new packages or installed or packages are updated.
+```
+
+## load ##
+
+```{r load-pkg}
+pkg <- c("tidyverse", "RColorBrewer", "patchwork")
+
+lapply(pkg, library, character.only = TRUE)
+```
+
+## adjust plot settings ##
+
+```{r plot-settings}
+## Set the amount of dodge in figures
+pd <- position_dodge(0.7)
+pd2 <- position_dodge(1)
+
+## theme settings for ggplot
+theme_set(
+  theme_bw() +
+    theme(text = element_text(size = 18), 
+          title = element_text(size = 18),
+          legend.position = "bottom")
+)
+```
+
+# section 1 - basic wrangling and re-shaping #
+
+## read in the raw data ##
+
+```{r}
+raw <- read_csv("data/AIHumanExperiment_Experiment.csv")
+head(raw)
+str(raw)
+summary(raw)
+glimpse(raw)
+```
+
+## rename variables and create factors ##
+
+rename and select variables.
+
+Just focus on a few key variables for now.
+
+```{r}
+data <- raw %>%
+  rename(pid = participant, group = aihuman, all_conditions = condition, 
+         matrix_name = matrixtype, condition = togetheropposed, 
+         response = finalanswer) %>% 
+  select(-jatosid, -prolificid, -all_conditions, -matrixnumber, -statvar, -answer, -rt)
+head(data)
+```
+
+recode variables and create factors (this is useful for plotting the data)
+
+```{r}
+# recode and create factors
+data <- data %>% 
+  mutate(matrix_name = if_else(matrix_name == "1", "FAVvsMJP",
+                       if_else(matrix_name == "2", "MDvsMIP/MJP", "FAVvsP")),
+         condition = if_else(condition == "1", "together", "opposed"),
+         group = factor(group, levels = c("Human", "AI")),
+         matrix_name = factor(matrix_name, levels = c("FAVvsMJP", "MDvsMIP/MJP", "FAVvsP")),
+         condition = factor(condition, levels = c("together", "opposed")))
+head(data)
+```
+
+## take a quick look ##
+
+overall summary
+
+```{r}
+summary(data)
+```
+
+tally by group
+
+```{r}
+tally <- data %>% 
+  group_by(group) %>% 
+  distinct(pid) %>% 
+  tally()
+tally
+```
+
+# section 2 - create summary data for plotting #
+
+## at the individual pid level ##
+
+```{r}
+summary_pid <- data %>% 
+  group_by(pid, group, matrix_name, condition) %>% 
+  summarise(n= n(),
+            mean=mean(response), 
+            sd=sd(response), 
+            sem = sd/sqrt(n))
+head(summary_pid)
+```
+
+## at the group level ##
+
+```{r}
+summary_group <- data %>% 
+  group_by(group, matrix_name, condition) %>% 
+  summarise(n= n()/2, ## /2 as it counts both observations
+            mean=mean(response), 
+            sd=sd(response), 
+            sem = sd/sqrt(n))
+head(summary_group)
+```
+
+# section 3 - some plots #
+
+violin
+
+```{r}
+p3.1 <- ggplot(summary_pid, 
+              aes(x=condition, y=mean, fill = group)) +
+   geom_jitter(position=position_jitterdodge(dodge.width =1), alpha = 1, 
+               colour = "darkgrey") +
+   geom_violin(alpha = 0.7, position=pd2) +
+   geom_errorbar(data=summary_group, 
+                 aes(y=mean, ymin=mean-sem, ymax=mean+sem), width=.2, position=pd2) +
+   # geom_line(data=summary_group, aes(group=group), position=pd2) +
+   geom_point(data=summary_group, aes(y=mean), position=pd2, size =1) +
+   scale_colour_brewer(palette = "Dark2")+
+   scale_fill_brewer(palette = "Dark2")+
+   labs(x="", y = "response")+
+   scale_y_continuous(breaks=seq(0,12,2), limits=c(0,12)) +
+   facet_grid(~matrix_name)+
+   ggtitle("response by condition")
+p3.1
+
+ggsave ("figures/violin.jpeg",
+        width = 8, height = 6)
+```
+
+# section 4 - calculate pull scores #
+
+## calculate a difference score (or pull score) for each matrix type ##
+
+For each matrix type, calculate the response on opposed minus the response on together. 
+Since the responses on each of the together/opposed matrices can be 0-12, the difference score can be between -12 and +12.
+
+This is now one difference score per pid and per matrix_name, which means 3 datapoints per pid.
+
+```{r}
+diff <- summary_pid %>% 
+  group_by(pid, group, matrix_name) %>% 
+  pivot_wider(-c(n, sd, sem),
+              names_from = "condition",
+              values_from = "mean") %>% 
+  mutate(pull = opposed - together) %>% 
+  ungroup()
+head(diff)
+```
+
+# section 5 - create summary data on pull scores #
+
+## at the group level ##
+
+```{r}
+diff_group <- diff %>% 
+  group_by(group, matrix_name) %>% 
+  summarise(n=n(),
+            group_pull=mean(pull), 
+            group_sd=sd(pull), 
+            group_sem = group_sd / sqrt(n)) %>% 
+  rename(pull = group_pull, sd = group_sd, sem = group_sem)
+head(diff_group)
+```
+
+# section 6 - plot the pull scores #
+
+now plot using violin plots
+
+```{r}
+p6.1 <- ggplot(diff, 
+              aes(x=group, y=pull, fill = group)) +
+   geom_jitter(position=position_jitterdodge(dodge.width =1), alpha = 1, 
+               colour = "darkgrey") +
+   geom_violin(alpha = 0.7, position=pd2) +
+   geom_errorbar(data=diff_group, aes(y=pull, ymin=pull-sem, ymax=pull+sem), 
+                 width=.2, position=pd2) +
+   geom_line(data=diff_group, aes(y=pull, group=1), position=pd2) +
+   geom_point(data=diff_group, aes(y=pull), position=pd2, size =1) +
+   scale_colour_brewer(palette = "Dark2")+
+   scale_fill_brewer(palette = "Dark2")+
+   labs(y = "response")+
+   scale_y_continuous(breaks=seq(-12,12,2), limits=c(-12,12)) +
+   guides(fill="none")+
+   facet_grid(~matrix_name)+
+   ggtitle("pull score by group and condition")
+p6.1
+
+ggsave ("figures/violin_diff.jpeg",
+        width = 8, height = 6)
+```
+
+# section 7 - add deviation coding variables ##
+
+create a new dataframe that we will use for the main analysis. 
+
+```{r}
+diffd <- diff %>% 
+  mutate(groupd = if_else(group == "AI", 0.5, -0.5),
+         mat2v1 = if_else(matrix_name == "MDvsMIP/MJP", 2/3, -1/3), # target MDvsMIP/MJP
+         mat3v1 = if_else(matrix_name == "FAVvsP", 2/3, -1/3)) %>%  # target FAVvsP
+  select(pid, groupd, mat2v1, mat3v1, pull) %>% 
+  rename(group=groupd)
+head(diffd)
+```
+
+# section 8 - save out some data #
+
+```{r}
+write_csv(data, "data/data.csv") # all data good for plotting
+write_csv(summary_pid, "data/summary_pid.csv")
+write_csv(summary_group, "data/summary_group.csv")
+write_csv(diff, "data/diff.csv")
+write_csv(diff_group, "data/diff_group.csv")
+write_csv(diffd, "data/diffd.csv")
+```
