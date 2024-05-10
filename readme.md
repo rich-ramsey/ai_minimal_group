@@ -38,6 +38,7 @@ This is the primary data wrangling file, which reads in the raw data file and tr
 This file builds a series of Bayesian regression models and performs some model checks and comparisons. This file is only intended to be used in successive chunks (and not with one click). The code would need modifying the run in its entirety. The models take seconds or minutes to run on standard desktop machines. Before you run the model script, you need to create a folder called **/models/** in the top level directory.
 
 **effects_index.Rmd**
+
 **effects_factorial.Rmd**
 
 These effects files read in the full model, plots parameter estimates and calculates model fits. There are two separate files, one for the index coding models and one for the factorial model.
@@ -49,7 +50,9 @@ renv() produces a plain text file that records all package versions.
 There are also folders, with self-explanatory titles: 
 
 **/data/**
+
 **/figures/**
+
 **/tables/**
 
 # How do I use the files? #
