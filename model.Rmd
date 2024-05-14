@@ -300,7 +300,8 @@ summary(bi_h2)
 pp_checks
 
 ```{r}
-ppbi_h2 <- pp_check(bi_h2, ndraws = 100)
+ppbi_h2 <- pp_check(bi_h2, ndraws = 100, type = "dens_overlay_grouped",
+                    group = "condition")
 ppbi_h2
 ```
 
@@ -397,7 +398,8 @@ summary(bi_ai2)
 pp_checks
 
 ```{r}
-ppbi_ai2 <- pp_check(bi_ai2, ndraws = 100)
+ppbi_ai2 <- pp_check(bi_ai2, ndraws = 100, type = "dens_overlay_grouped",
+                    group = "condition")
 ppbi_ai2
 ```
 
@@ -694,6 +696,18 @@ pp_checks
 ```{r}
 ppbd3.3 <- pp_check(bd3.3, ndraws = 100)
 ppbd3.3
+
+# ppbd3.3b <- pp_check(bd3.3, ndraws = 100, type = "dens_overlay_grouped",
+#                     group = "group")
+# ppbd3.3b
+# 
+# ppbd3.3c <- pp_check(bd3.3, ndraws = 100, type = "dens_overlay_grouped",
+#                     group = "mat2v1")
+# ppbd3.3c
+# 
+# ppbd3.3d <- pp_check(bd3.3, ndraws = 100, type = "dens_overlay_grouped",
+#                     group = "mat3v1")
+# ppbd3.3d
 ```
 
 
