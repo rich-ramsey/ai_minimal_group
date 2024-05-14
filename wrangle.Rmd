@@ -32,7 +32,7 @@ take a snapshot of loaded packages and update the lock.file using renv
 ## load ##
 
 ```{r load-pkg}
-pkg <- c("tidyverse", "RColorBrewer", "patchwork")
+pkg <- c("tidyverse", "RColorBrewer", "patchwork", "ggridges")
 
 lapply(pkg, library, character.only = TRUE)
 ```
@@ -65,7 +65,7 @@ Uncomment to load in these files.
 #          condition = factor(condition, levels = c("together", "opposed")))
 # head(data)
 # 
-# diff <- read_csv("data/diff.csv") %>% 
+# diff <- read_csv("data/diff.csv") %>%
 #   mutate(group = factor(group, levels = c("Human", "AI")),
 #          matrix_name = factor(matrix_name, levels = c("FAVvsMJP", "MDvsMIP/MJP", "FAVvsP")))
 # head(diff)
@@ -341,8 +341,6 @@ let's try to display percentiles for the size of the difference score
 using ggridges and with data points too
 
 ```{r plot9.6}
-library(ggridges)
-
 p9.6 <- ggplot(diff, aes(x = pull, y = "", fill = after_stat(quantile))) +
   stat_density_ridges(
     geom = "density_ridges_gradient", calc_ecdf = TRUE,
