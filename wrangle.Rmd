@@ -19,7 +19,7 @@ It produces some summary data plots, saves out data files for modelling and furt
 ## install ##
 
 ```{r install-pkg}
-# install.packages(c("tidyverse", "RColorBrewer", "patchwork"))
+# install.packages(c("tidyverse", "RColorBrewer", "patchwork", "ggridges"))
 ```
 
 take a snapshot of loaded packages and update the lock.file using renv
@@ -325,7 +325,7 @@ p9.4 <- ggplot(diff,
    geom_density(alpha=0.5) +
    facet_grid(~matrix_name) +
    ggtitle("log(pull) score by group and matrix type") +
-   xlim(0,5)
+   xlim(0,4)
 p9.4
 ```
 
