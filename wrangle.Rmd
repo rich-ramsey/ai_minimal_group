@@ -53,6 +53,24 @@ theme_set(
 )
 ```
 
+## read in previously wrangled and saved data ##
+
+this can sometimes be useful if you want to plot stuff without re-wrangling first.
+Uncomment to load in these files.
+
+```{r}
+# data <- read_csv("data/data.csv") %>%
+#   mutate(group = factor(group, levels = c("Human", "AI")),
+#          matrix_name = factor(matrix_name, levels = c("FAVvsMJP", "MDvsMIP/MJP", "FAVvsP")),
+#          condition = factor(condition, levels = c("together", "opposed")))
+# head(data)
+# 
+# diff <- read_csv("data/diff.csv") %>% 
+#   mutate(group = factor(group, levels = c("Human", "AI")),
+#          matrix_name = factor(matrix_name, levels = c("FAVvsMJP", "MDvsMIP/MJP", "FAVvsP")))
+# head(diff)
+```
+
 # section 1 - basic wrangling and re-shaping #
 
 ## read in the raw data ##
@@ -249,4 +267,106 @@ write_csv(summary_group, "data/summary_group.csv")
 write_csv(diff, "data/diff.csv")
 write_csv(diff_group, "data/diff_group.csv")
 write_csv(diffd, "data/diffd.csv")
+```
+
+
+# section 9 - play around with some density plots #
+
+density (raw scores)
+
+```{r}
+p9.1 <- ggplot(data, 
+              aes(x=response, fill = group)) +
+   geom_density(alpha=0.5) +
+   facet_grid(matrix_name~condition) +
+   ggtitle("response by group, matrix type and condition")
+p9.1
+```
+
+density (pull scores)
+
+```{r}
+p9.2 <- ggplot(diff, 
+              aes(x=pull, fill = group)) +
+   geom_density(alpha=0.5) +
+   facet_grid(~matrix_name) +
+   ggtitle("pull score by group and matrix type")
+p9.2
+```
+
+density (log(pull) scores)
+
+first, create a log(pull)
+
+```{r}
+diff <- diff %>% 
+  mutate(pos_pull = pull + 13,
+         log_pull = log(pos_pull))
+head(diff)
+summary(diff)
+```
+
+plot positive pull scores
+
+```{r}
+p9.3 <- ggplot(diff, 
+              aes(x=pos_pull, fill = group)) +
+   geom_density(alpha=0.5) +
+   facet_grid(~matrix_name) +
+   ggtitle("log(pull) score by group and matrix type")
+p9.3
+```
+
+plot log pull scores
+
+```{r}
+p9.4 <- ggplot(diff, 
+              aes(x=log_pull, fill = group)) +
+   geom_density(alpha=0.5) +
+   facet_grid(~matrix_name) +
+   ggtitle("log(pull) score by group and matrix type") +
+   xlim(0,5)
+p9.4
+```
+
+plot together
+
+```{r}
+p9.5 <- p9.2 / p9.4 
+p9.5
+```
+
+let's try to display percentiles for the size of the difference score
+
+using ggridges and with data points too
+
+```{r plot9.6}
+library(ggridges)
+
+p9.6 <- ggplot(diff, aes(x = pull, y = "", fill = after_stat(quantile))) +
+  stat_density_ridges(
+    geom = "density_ridges_gradient", calc_ecdf = TRUE,
+    quantiles = 10, quantile_lines = TRUE, 
+    jittered_points = TRUE, scale = 10,
+    linewidth = 0.7, vline_color = "red",
+    point_size = 1, point_alpha = 0.25, 
+    position = position_raincloud(adjust_vlines = TRUE)
+  ) +
+  scale_fill_viridis_d(name = "Quantiles") +
+  geom_vline(xintercept = 0, colour = "black", linetype = "dashed",
+             linewidth = 1) +
+  geom_vline(data = diff_group,
+             aes(xintercept = pull), colour = "turquoise", linetype = "dashed",
+             linewidth = 1) +
+  theme(legend.position = "bottom") +
+  guides(fill = guide_legend(nrow = 1)) +
+  labs(title = "Pull score density quantiles by group and matrix type",
+       y = NULL,
+       x = "pull score") +
+  # scale_x_continuous(breaks = seq(-150, 150, 25)) +
+  facet_grid(group~matrix_name)
+p9.6
+
+ggsave("figures/diff_dens_q.jpeg",
+       width = 8, height = 6)
 ```
