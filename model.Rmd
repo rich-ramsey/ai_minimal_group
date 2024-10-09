@@ -39,7 +39,7 @@ take a snapshot of loaded packages and update the lock.file using renv
 
 ```{r load-pkg}
 pkg <- c("cmdstanr", "standist", "tidyverse", "RColorBrewer", "patchwork", 
-         "brms", "tidybayes", "bayesplot", "future", "parallel")
+         "brms", "tidybayes", "bayesplot", "future", "parallel", "rstan")
 
 lapply(pkg, library, character.only = TRUE)
 ```

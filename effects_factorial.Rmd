@@ -36,9 +36,25 @@ take a snapshot of loaded packages and update the lock.file using renv
 
 ```{r load-pkg}
 pkg <- c("tidyverse", "RColorBrewer", "patchwork", "here",
-         "brms", "tidybayes", "bayesplot", "future", "parallel", "tinytable")
+         "brms", "tidybayes", "bayesplot", "future", "parallel", "tinytable", "rstan")
 
 lapply(pkg, library, character.only = TRUE)
+```
+
+## adjust plot settings ##
+
+```{r plot-settings}
+## Set the amount of dodge in figures
+pd <- position_dodge(0.7)
+pd2 <- position_dodge(1)
+
+## theme settings for ggplot
+theme_set(
+  theme_bw() +
+    theme(text = element_text(size = 18, face = "bold"), 
+          title = element_text(size = 18, face = "bold"),
+          legend.position = "bottom")
+)
 ```
 
 ## table options ##
@@ -134,9 +150,8 @@ check.labels
 p_tidy_fixed <- ggplot(tidy_fixed, aes(x = value, y = fct_rev(term), fill=term)) +  
   geom_vline(xintercept = 0, color = "grey", alpha = 5/10) +
   stat_halfeye() +
-  labs(title = "Model bd3.3 coefficient plot for fixed effects (predictors)",
+  labs(title = "Model bd3.3 coefficient plot for fixed effects",
        x = NULL, y = NULL) +
-  theme_bw() +
   scale_fill_brewer(palette = "Dark2") +
   theme(panel.grid   = element_blank(),
         panel.grid.major.y = element_line(color = alpha("firebrick4", 1/2), linetype = 3),
@@ -148,7 +163,7 @@ p_tidy_fixed <- ggplot(tidy_fixed, aes(x = value, y = fct_rev(term), fill=term))
 p_tidy_fixed
 
 ggsave ("figures/bd3.3_fixef.jpeg",
-        width = 6, height = 4)
+        width = 9, height = 6, dpi=800)
 ```
 
 ## make a table of fixed effects ##

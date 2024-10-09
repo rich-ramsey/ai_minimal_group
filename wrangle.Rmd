@@ -47,8 +47,8 @@ pd2 <- position_dodge(1)
 ## theme settings for ggplot
 theme_set(
   theme_bw() +
-    theme(text = element_text(size = 18), 
-          title = element_text(size = 18),
+    theme(text = element_text(size = 18, face = "bold"), 
+          title = element_text(size = 18, face = "bold"),
           legend.position = "bottom")
 )
 ```
@@ -241,7 +241,7 @@ p6.1 <- ggplot(diff,
 p6.1
 
 ggsave ("figures/violin_diff.jpeg",
-        width = 8, height = 6)
+        width = 8, height = 6, dpi=800)
 ```
 
 # section 7 - add deviation coding variables ##
@@ -366,5 +366,5 @@ p9.6 <- ggplot(diff, aes(x = pull, y = "", fill = after_stat(quantile))) +
 p9.6
 
 ggsave("figures/diff_dens_q.jpeg",
-       width = 8, height = 6)
+       width = 8, height = 6, dpi=800)
 ```
